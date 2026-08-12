@@ -1,0 +1,56 @@
+台指期大波段反轉預警 — 後端啟動步驟
+========================================
+
+一、進入專案
+----------------------------------------
+cd /Users/jiangziqi/Desktop/stock_Kbar
+
+
+二、啟動虛擬環境
+----------------------------------------
+source .venv/bin/activate
+
+
+三、（第一次或套件有更新時）安裝依賴
+----------------------------------------
+pip install -r requirements.txt
+
+
+四、啟動 API 後端
+----------------------------------------
+uvicorn server:app --reload --port 8000
+
+成功後會看到類似：
+  Uvicorn running on http://127.0.0.1:8000
+
+API 位址：
+  http://127.0.0.1:8000
+  健康檢查：http://127.0.0.1:8000/api/health
+  儀表板資料：http://127.0.0.1:8000/api/dashboard
+
+
+五、（另開一個終端機）啟動 Vue 前端
+----------------------------------------
+cd /Users/jiangziqi/Desktop/stock_Kbar/frontend
+npm install          # 第一次才需要
+npm run dev
+
+瀏覽器開啟：
+  http://localhost:5173
+
+
+注意
+----------------------------------------
+1. 前端依賴後端，請先開後端再開前端。
+2. --reload 代表改 Python 程式會自動重載。
+3. 若埠口被占用，可改成：
+   uvicorn server:app --reload --port 8001
+   並記得前端 vite.config.js 的 proxy 也要改成同一個 port。
+4. 停止後端：在該終端機按 Ctrl + C。
+
+
+（可選）舊版 Streamlit 畫面
+----------------------------------------
+cd /Users/jiangziqi/Desktop/stock_Kbar
+source .venv/bin/activate
+streamlit run app.py
