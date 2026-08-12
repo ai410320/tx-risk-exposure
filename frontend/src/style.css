@@ -215,7 +215,7 @@ table tbody tr.active { background: #fff7ed; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 2px;
+  margin-top: 8px;
   padding: 6px 10px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -223,6 +223,8 @@ table tbody tr.active { background: #fff7ed; }
   color: #334155;
   font-size: 12px;
   line-height: 1.3;
+  position: relative;
+  z-index: 2;
 }
 .chart-timebar .timebar-hint {
   color: #475569;

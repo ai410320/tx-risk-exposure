@@ -69,7 +69,8 @@ export function timeAxisLabel(dates) {
     hideOverlap: true,
     showMinLabel: true,
     showMaxLabel: true,
-    margin: 6,
+    // 與下方 dataZoom 滑桿留距，避免刻度被蓋住
+    margin: 10,
     color: '#475569',
     fontSize: 11,
     formatter: (value, idx) => formatAxisTickLabel(value, idx, dates),
@@ -79,7 +80,7 @@ export function timeAxisLabel(dates) {
 /** ECharts 連動縮放（玩股網：下方導航軸可拖） */
 export function linkedDataZoom(
   axisCount,
-  { bottom = 6, height = 28, dates = null, left = 56, right = 56 } = {},
+  { bottom = 8, height = 26, dates = null, left = 56, right = 56 } = {},
 ) {
   const xAxisIndex = Array.from({ length: axisCount }, (_, i) => i)
   return [
@@ -100,9 +101,9 @@ export function linkedDataZoom(
       height,
       bottom,
       filterMode: 'none',
-      brushSelect: true,
-      // 拖動時於把手顯示起迄日；靜止時看軸刻度與圖下時間列
-      showDetail: true,
+      brushSelect: false,
+      // 關閉把手即時日期：拖動時會蓋住軸刻度與圖下時間列；區間改看 chart-timebar
+      showDetail: false,
       showDataShadow: true,
       backgroundColor: '#e2e8f0',
       dataBackground: {
@@ -134,8 +135,6 @@ export function linkedDataZoom(
         color: '#0f172a',
         fontSize: 11,
         fontWeight: 600,
-        backgroundColor: 'rgba(255,255,255,0.92)',
-        padding: [2, 4],
       },
       labelFormatter: (value, valueStr) => formatChartDateLabel(value, valueStr, dates),
     },

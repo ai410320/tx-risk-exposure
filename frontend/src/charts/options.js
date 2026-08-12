@@ -648,12 +648,13 @@ export function chipSpotFutOption(series, windowSize = 120) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(3, { bottom: 4, dates }),
+    // bottom 抬高：軸日期在滑桿上方；區間文字看圖下 timebar
+    dataZoom: linkedDataZoom(3, { bottom: 10, height: 26, dates, left: 56, right: 28 }),
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
-      { left: 56, right: 28, top: 40, height: '32%' },
-      { left: 56, right: 28, top: '48%', height: '18%' },
-      { left: 56, right: 28, top: '72%', height: '18%' },
+      { left: 56, right: 28, top: 40, height: '28%' },
+      { left: 56, right: 28, top: '42%', height: '15%' },
+      { left: 56, right: 28, top: '61%', bottom: 70 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
@@ -720,11 +721,11 @@ export function chipOiPcrOption(series, windowSize = 120) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(2, { bottom: 4, dates, left: 64, right: 28 }),
+    dataZoom: linkedDataZoom(2, { bottom: 10, height: 26, dates, left: 64, right: 28 }),
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
-      { left: 64, right: 28, top: 40, height: '36%' },
-      { left: 64, right: 28, top: '52%', height: '30%' },
+      { left: 64, right: 28, top: 40, height: '34%' },
+      { left: 64, right: 28, top: '48%', bottom: 70 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
@@ -811,15 +812,15 @@ export function chipPcrKlineOption(series, windowSize = 120) {
     tooltip: { trigger: 'axis' },
     legend: { top: 0, type: 'scroll' },
     dataZoom: [
-      ...linkedDataZoom(2, { bottom: 10, height: 28, dates, left: 72, right: 36 }),
+      ...linkedDataZoom(2, { bottom: 10, height: 26, dates, left: 72, right: 36 }),
       // 右側振幅滑桿靠內，避免蓋住 PCR 標籤
-      ...priceAxisZoom(0, { top: '7%', height: '54%', right: 8, width: 16 }),
+      ...priceAxisZoom(0, { top: '7%', height: '50%', right: 8, width: 16 }),
     ],
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
-      // K 線區加高，振幅較好讀
-      { left: 72, right: 36, top: 40, height: '56%' },
-      { left: 72, right: 36, top: '66%', height: '18%' },
+      // K 線區加高，振幅較好讀；底部留給軸日期 + 時間軸
+      { left: 72, right: 36, top: 40, height: '52%' },
+      { left: 72, right: 36, top: '60%', bottom: 70 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
