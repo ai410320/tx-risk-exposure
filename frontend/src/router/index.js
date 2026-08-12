@@ -12,11 +12,11 @@ export default createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'overview', component: OverviewView },
+    { path: '/chip', name: 'chip', component: ChipView },
     { path: '/outlook', name: 'outlook', component: OutlookView },
     { path: '/trend', name: 'trend', component: TrendView },
     { path: '/momentum', name: 'momentum', component: MomentumView },
     { path: '/breadth', name: 'breadth', component: BreadthView },
-    { path: '/chip', name: 'chip', component: ChipView },
     { path: '/external', name: 'external', component: ExternalView },
     { path: '/monthly', name: 'monthly', component: MonthlyView },
   ],

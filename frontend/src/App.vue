@@ -35,11 +35,11 @@ onUnmounted(() => timer && clearInterval(timer))
       <div class="sub">Risk 0～100 → Exposure</div>
       <nav class="nav">
         <router-link to="/">總覽／Risk</router-link>
+        <router-link to="/chip">籌碼／法人</router-link>
         <router-link to="/outlook">走勢判讀</router-link>
         <router-link to="/trend">趨勢與乖離</router-link>
         <router-link to="/momentum">價量與動能</router-link>
         <router-link to="/breadth">市場廣度</router-link>
-        <router-link to="/chip">籌碼／法人</router-link>
         <router-link to="/external">外部市場</router-link>
         <router-link to="/monthly">日K／MA20乖離</router-link>
       </nav>

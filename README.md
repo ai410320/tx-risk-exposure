@@ -56,13 +56,13 @@ docker run --rm -p 8000:8000 -e CORS_ORIGINS='*' tx-risk-exposure
 | 路由 | 內容 |
 |------|------|
 | `/` | Risk／Exposure 總覽 |
+| `/chip` | 籌碼／法人 |
+| `/outlook` | 走勢判讀 |
 | `/trend` | 均線與乖離 |
 | `/momentum` | 價量、MACD、KD |
 | `/breadth` | 市場廣度 |
 | `/external` | 外部市場 |
-| `/chip` | 籌碼／法人 |
 | `/monthly` | 月K 乖離 |
-| `/outlook` | 展望 |
 
 ## 舊版 Streamlit（可選）
 
