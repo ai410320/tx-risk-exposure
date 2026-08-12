@@ -7,8 +7,8 @@ import { bannerClass, fmt, overviewComboOption, pct } from '../charts/options'
 const GROUP_META = [
   ['score_A', 'A', 'Trend', 30, '均線結構／斜率', '短中線轉弱、跌破 MA20／MA60'],
   ['score_B', 'B', 'Extension', 20, '乖離是否過熱', '漲太多、高檔過熱（早減關鍵）'],
-  ['score_C', 'C', 'Momentum', 15, 'RSI／KD／MACD', '動能衰退、頂背離、MACD 轉弱'],
-  ['score_D', 'D', 'PriceVolume', 15, '當日漲跌＋成交量', '爆量下跌、急殺'],
+  ['score_C', 'C', 'Momentum', 15, 'RSI／KD／MACD', '動能衰退、頂背離、MACD 轉弱（詳見「價量與動能」頁）'],
+  ['score_D', 'D', 'PriceVolume', 15, '當日漲跌＋成交量', '爆量下跌、急殺（詳見「價量與動能」頁）'],
   ['score_E', 'E', 'Breadth', 30, '上漲／下跌家數', '指數還撐、個股已經弱'],
   ['score_F', 'F', 'Volatility', 15, 'ATR 波動', '波動突然放大'],
   ['score_G', 'G', 'External', 10, '美股／費半／韓半', '外部科技鏈同步轉弱'],

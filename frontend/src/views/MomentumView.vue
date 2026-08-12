@@ -150,6 +150,47 @@ function onAxisClick({ date }) {
   </div>
 
   <div class="card">
+    <h3>C／D 代表什麼？</h3>
+    <p class="page-cap">
+      兩者都是<strong>多單風險加分</strong>（越高越偏「該留意減碼」），不是 KD 線的 K／D。
+      分數低＝當天動能／價量沒有明顯轉弱訊號。
+    </p>
+    <table>
+      <thead>
+        <tr><th>組別</th><th>看什麼</th><th>主要加分條件</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>C Momentum<br /><span class="muted">上限 15</span></td>
+          <td>漲勢動能有沒有變弱</td>
+          <td>
+            RSI 過熱（65→80+）＋1～7；
+            K&gt;80（死叉再多加）＋1／＋4；
+            MACD 柱連縮＋2～5；
+            MACD&lt;0＋7；
+            價創新高但動能沒跟上（背離）最多＋8
+          </td>
+        </tr>
+        <tr>
+          <td>D PriceVolume<br /><span class="muted">上限 15</span></td>
+          <td>有沒有殺得很兇／量價轉差</td>
+          <td>
+            下跌＋爆量（量比&gt;1.5／2）＋5／＋8；
+            創新高但量能萎縮＋3；
+            單日急跌（−2%／−3%／−4%）＋4／＋7／＋10
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="page-cap" style="margin-top:10px">
+      <strong>怎麼讀當日分數：</strong>
+      C=1 常見於「只有 K 偏高、其餘未轉弱」；
+      D=0 代表當天沒有爆量下跌或急殺。
+      單獨 KD 死叉／MACD 翻綠不要當成出場或做空理由，要和其他組與 Exposure 一起看。
+    </p>
+  </div>
+
+  <div class="card">
     <h3>價格 + 成交量</h3>
     <p class="page-cap">健康多頭：價格 ↑ 且成交量 ↑。危險：高檔爆量換手，再出現爆量長黑。</p>
     <BaseChart :option="priceOpt" height="520px" @chart-click="onChartClick" @axis-click="onAxisClick" />

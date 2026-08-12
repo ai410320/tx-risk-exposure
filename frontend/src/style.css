@@ -97,6 +97,7 @@ a { color: inherit; text-decoration: none; }
 .content { padding: 24px 28px 40px; }
 .page-title { margin: 0 0 4px; font-size: 26px; }
 .page-cap { color: var(--muted); margin: 0 0 18px; }
+.muted { color: var(--muted); font-size: 12px; font-weight: 400; }
 
 .banner {
   padding: 14px 16px;
