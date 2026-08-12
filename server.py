@@ -1,17 +1,27 @@
-"""FastAPI：給 Vue 前端使用的 JSON API。"""
+"""FastAPI：給 Vue 前端使用的 JSON API；正式環境一併提供前端靜態檔。"""
+
+import os
+from pathlib import Path
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from src.config import DEV_PERCENTILE_ALERT, REVERSAL_LOOKBACK_DAYS
 from src.service import build_dashboard_payload, load_quote
 from src.realtime_price import session_label
 
+DIST = Path(__file__).resolve().parent / "frontend" / "dist"
+
+_default_origins = "http://localhost:5173,http://127.0.0.1:5173"
+_cors = [o.strip() for o in os.getenv("CORS_ORIGINS", _default_origins).split(",") if o.strip()]
+
 app = FastAPI(title="台指期大波段反轉預警 API")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
+    allow_origins=_cors if "*" not in _cors else ["*"],
+    allow_credentials="*" not in _cors,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -44,3 +54,15 @@ def dashboard(
     percentile: float = Query(DEV_PERCENTILE_ALERT, ge=50, le=99),
 ):
     return build_dashboard_payload(lookback, percentile)
+
+
+if DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    def spa(full_path: str):
+        """SPA fallback：API 以外路徑都回 index.html。"""
+        candidate = DIST / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(DIST / "index.html")

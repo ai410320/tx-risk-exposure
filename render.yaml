@@ -1,0 +1,13 @@
+# Render Blueprint：連 GitHub 後可一鍵部署
+# https://dashboard.render.com/blueprints
+services:
+  - type: web
+    name: tx-risk-exposure
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: FINMIND_TOKEN
+        sync: false
