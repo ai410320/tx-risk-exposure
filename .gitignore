@@ -2,7 +2,10 @@
 __pycache__/
 *.pyc
 .env
-data/cache/
+# 允許提交種子快取，讓雲端冷啟動不必重抓數百天
+data/cache/*
+!data/cache/*.csv
+!data/cache/.gitkeep
 .streamlit/
 .DS_Store
 frontend/node_modules/

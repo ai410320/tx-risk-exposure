@@ -30,6 +30,8 @@ DISPLAY_NAMES = {
     "tsm_adr": "台積電 ADR",
 }
 
+_SYMBOL_TO_KEY = {sym: key for key, sym in EXTERNAL_SYMBOLS.items()}
+
 _FETCH_TTL = 120
 _fetch_cache: dict[int, tuple[float, pd.DataFrame]] = {}
 
@@ -57,23 +59,59 @@ def fetch_external_history(lookback_days: int = 500) -> pd.DataFrame:
     start = now - timedelta(days=max(lookback_days, 60))
     # yfinance end 為 exclusive → +1 day 才含「今天」
     end = now + timedelta(days=1)
+    start_s = start.strftime("%Y-%m-%d")
+    end_s = end.strftime("%Y-%m-%d")
+    symbols = list(EXTERNAL_SYMBOLS.values())
     frames = []
-    for key, symbol in EXTERNAL_SYMBOLS.items():
-        hist = yf.download(
-            symbol,
-            start=start.strftime("%Y-%m-%d"),
-            end=end.strftime("%Y-%m-%d"),
+
+    try:
+        # 一次下載多標的，雲端冷啟動比逐檔串行快很多
+        raw = yf.download(
+            symbols,
+            start=start_s,
+            end=end_s,
             progress=False,
             auto_adjust=True,
-            threads=False,
+            threads=True,
+            group_by="ticker",
         )
-        if hist.empty:
-            continue
-        close = _close_series(hist)
-        series = close.copy()
-        series.index = pd.to_datetime(series.index).tz_localize(None).normalize()
-        series.name = key
-        frames.append(series)
+        if not raw.empty and isinstance(raw.columns, pd.MultiIndex):
+            for sym in symbols:
+                if sym not in raw.columns.get_level_values(0):
+                    continue
+                try:
+                    close = raw[sym]["Close"].dropna()
+                except Exception:
+                    continue
+                if close.empty:
+                    continue
+                series = close.astype(float).copy()
+                series.index = pd.to_datetime(series.index).tz_localize(None).normalize()
+                series.name = _SYMBOL_TO_KEY[sym]
+                frames.append(series)
+    except Exception:
+        frames = []
+
+    if not frames:
+        for key, symbol in EXTERNAL_SYMBOLS.items():
+            try:
+                hist = yf.download(
+                    symbol,
+                    start=start_s,
+                    end=end_s,
+                    progress=False,
+                    auto_adjust=True,
+                    threads=False,
+                )
+            except Exception:
+                continue
+            if hist.empty:
+                continue
+            close = _close_series(hist)
+            series = close.copy()
+            series.index = pd.to_datetime(series.index).tz_localize(None).normalize()
+            series.name = key
+            frames.append(series)
 
     if not frames:
         out = pd.DataFrame()
@@ -85,7 +123,6 @@ def fetch_external_history(lookback_days: int = 500) -> pd.DataFrame:
 
     _fetch_cache[cache_key] = (now_ts, out.copy())
     return out
-
 
 def align_to_tx_dates(external: pd.DataFrame, tx_dates: pd.Series) -> pd.DataFrame:
     """

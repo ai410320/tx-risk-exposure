@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
@@ -65,32 +66,47 @@ def load_reversal_bundle(
         raise RuntimeError("查無台指期資料")
 
     monthly = aggregate_monthly(daily)
-    breadth = load_breadth_history(daily["date"].tail(min(400, len(daily))))
-    external_raw = fetch_external_history(lookback_days=lookback)
+    breadth_dates = daily["date"].tail(min(400, len(daily)))
+
+    def _chip():
+        try:
+            return fetch_chip_history(lookback_days=lookback)
+        except Exception:
+            return pd.DataFrame()
+
+    def _taiex():
+        try:
+            return fetch_taiex_daily(lookback_days=lookback)
+        except Exception:
+            return pd.DataFrame()
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        f_breadth = pool.submit(load_breadth_history, breadth_dates)
+        f_ext = pool.submit(fetch_external_history, lookback)
+        f_chip = pool.submit(_chip)
+        f_taiex = pool.submit(_taiex)
+        breadth = f_breadth.result()
+        external_raw = f_ext.result()
+        chip = f_chip.result()
+        taiex = f_taiex.result()
+
     external = align_to_tx_dates(external_raw, daily["date"])
-    try:
-        chip = fetch_chip_history(lookback_days=lookback)
-    except Exception:
-        chip = pd.DataFrame()
     frame = build_risk_frame(
         daily, breadth, external, chip=chip, include_external=include_external, include_chip=True
     )
 
     try:
-        taiex = fetch_taiex_daily(lookback_days=lookback)
         taiex_frame = (
             build_risk_frame(taiex, breadth, None, chip=chip, include_external=False, include_chip=True)
             if not taiex.empty
             else pd.DataFrame()
         )
     except Exception:
-        taiex = pd.DataFrame()
         taiex_frame = pd.DataFrame()
 
     result = (daily, monthly, breadth, external, frame, taiex, taiex_frame, chip)
     _bundle_cache[key] = (now, result)
     return result
-
 
 def _series_values(series: pd.Series, kind: str = "float"):
     values = []

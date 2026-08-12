@@ -1,6 +1,8 @@
 """FastAPI：給 Vue 前端使用的 JSON API；正式環境一併提供前端靜態檔。"""
 
+import logging
 import os
+import threading
 from pathlib import Path
 
 from fastapi import FastAPI, Query
@@ -9,8 +11,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.config import DEV_PERCENTILE_ALERT, REVERSAL_LOOKBACK_DAYS
-from src.service import build_dashboard_payload, load_quote
+from src.service import build_dashboard_payload, load_quote, load_reversal_bundle
 from src.realtime_price import session_label
+
+logger = logging.getLogger("uvicorn.error")
 
 DIST = Path(__file__).resolve().parent / "frontend" / "dist"
 
@@ -25,6 +29,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _warmup_bundle() -> None:
+    """背景預熱，避免使用者第一次開頁就撞上長時間冷啟動。"""
+
+    def run() -> None:
+        try:
+            logger.info("warmup: loading reversal bundle…")
+            load_reversal_bundle(REVERSAL_LOOKBACK_DAYS, DEV_PERCENTILE_ALERT)
+            logger.info("warmup: done")
+        except Exception as exc:
+            logger.warning("warmup failed: %s", exc)
+
+    threading.Thread(target=run, daemon=True, name="bundle-warmup").start()
 
 
 @app.get("/api/health")

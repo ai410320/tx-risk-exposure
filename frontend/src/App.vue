@@ -78,8 +78,16 @@ onUnmounted(() => timer && clearInterval(timer))
       </div>
     </aside>
     <main class="content">
-      <div v-if="store.error" class="error">{{ store.error }}<br />請確認後端 `uvicorn server:app --reload --port 8000` 已啟動。</div>
-      <div v-else-if="!store.data && store.loading" class="loading">正在載入台指期、廣度與外部市場…</div>
+      <div v-if="store.error" class="error">
+        {{ store.error }}
+        <br />
+        若是線上版：第一次開可能要等 1～2 分鐘（冷啟動抓資料），請按「立即刷新」再試。
+        <br />
+        本機請確認後端 `uvicorn server:app --reload --port 8000` 已啟動。
+      </div>
+      <div v-else-if="!store.data && store.loading" class="loading">
+        正在載入台指期、廣度與外部市場…（線上首次可能較久）
+      </div>
       <router-view v-else-if="store.data" />
     </main>
   </div>

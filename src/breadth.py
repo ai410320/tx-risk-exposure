@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import time
 from datetime import datetime
@@ -14,6 +15,8 @@ from .config import CACHE_DIR
 TWSE_MI_INDEX = "https://www.twse.com.tw/rwd/zh/afterTrading/MI_INDEX"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 CACHE_FILE = CACHE_DIR / "twse_breadth.csv"
+# 雲端冷啟動若缺整段歷史，一次補太多會超過 Render 逾時；優先補最近 N 日
+BREADTH_MAX_BACKFILL = int(os.getenv("BREADTH_MAX_BACKFILL", "40"))
 
 
 def _parse_count_limit(text: str) -> tuple[int, int]:
@@ -106,6 +109,8 @@ def load_breadth_history(trading_dates: pd.Series, sleep_s: float = 0.15) -> pd.
 
     have = set(cached["date"]) if not cached.empty else set()
     missing = [d for d in dates if d not in have]
+    if len(missing) > BREADTH_MAX_BACKFILL:
+        missing = missing[-BREADTH_MAX_BACKFILL:]
     rows = []
     for date in missing:
         row = fetch_twse_breadth(date)
