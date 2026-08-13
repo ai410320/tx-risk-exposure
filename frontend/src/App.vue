@@ -20,7 +20,7 @@ onMounted(async () => {
 
 watch(() => store.refreshSeconds, restartTimer)
 watch(
-  () => [store.lookback, store.percentile],
+  () => store.lookback,
   () => {
     store.load()
   },
@@ -60,11 +60,16 @@ onUnmounted(() => timer && clearInterval(timer))
         <p class="hint">只影響圖表顯示長度；可再拖圖下方滑桿微調。</p>
 
         <label>計算用歷史天數</label>
-        <input v-model.number="store.lookback" type="number" min="400" max="1200" step="50" />
-        <p class="hint">給評分／百分位用，不是圖表一定顯示這麼多根。</p>
+        <input
+          :value="store.lookback"
+          type="number"
+          min="250"
+          max="1200"
+          step="5"
+          @change="store.setLookback($event.target.value)"
+        />
+        <p class="hint">預設 365 天（約一年）。愈長首次載入愈慢；圖表顯示長度請用上方區間。</p>
 
-        <label>乖離百分位門檻</label>
-        <input v-model.number="store.percentile" type="number" min="80" max="99" />
         <label>自動刷新（秒）</label>
         <select v-model.number="store.refreshSeconds">
           <option :value="0">關閉</option>

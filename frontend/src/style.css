@@ -206,6 +206,10 @@ table tbody tr.active { background: #fff7ed; }
   width: 100%;
   overflow: visible;
 }
+.echart {
+  /* 觸控板／觸控仍允許頁面上下滑，不要被 canvas 吃掉 */
+  touch-action: pan-y;
+}
 .card .chart-wrap {
   /* 給 PCR 右側門檻標籤留白，避免被卡片裁切 */
   padding-right: 4px;

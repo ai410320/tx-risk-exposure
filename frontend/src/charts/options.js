@@ -1,4 +1,4 @@
-import { linkedDataZoom, priceAxisZoom, timeAxisLabel } from './range'
+import { linkedDataZoom, timeAxisLabel } from './range'
 
 /** K 棒視覺：加粗實體，振幅較好辨識 */
 const CANDLE_STYLE = {
@@ -155,15 +155,12 @@ export function overviewComboOption(series, monthDev, threshold = 0.8, selectedD
     tooltip: { trigger: 'axis' },
     legend: { top: 0, type: 'scroll' },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    dataZoom: [
-      ...linkedDataZoom(4, { bottom: 8, height: 30, dates, left: 64, right: 128 }),
-      ...priceAxisZoom(0, { top: '10%', height: '32%', right: 12 }),
-    ],
+    dataZoom: linkedDataZoom(4, { bottom: 8, height: 30, dates, left: 72, right: 128 }),
     grid: [
-      { left: 56, right: 128, top: 44, height: '40%' },
-      { left: 56, right: 128, top: '48%', height: '8%' },
-      { left: 56, right: 128, top: '58%', height: '10%' },
-      { left: 56, right: 128, top: '70%', bottom: 72 },
+      { left: 72, right: 128, top: 40, height: '34%' },
+      { left: 72, right: 128, top: '42%', height: '12%' },
+      { left: 72, right: 128, top: '57%', height: '13%' },
+      { left: 72, right: 128, top: '73%', bottom: 78 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
@@ -184,14 +181,50 @@ export function overviewComboOption(series, monthDev, threshold = 0.8, selectedD
         gridIndex: 0,
         scale: true,
         name: '點位',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameRotate: 90,
         nameTextStyle: { fontSize: 11 },
         splitNumber: 5,
+        axisLabel: { fontSize: 10, hideOverlap: true },
         min: (v) => v.min - (v.max - v.min) * 0.08,
         max: (v) => v.max + (v.max - v.min) * 0.08,
       },
-      { gridIndex: 1, scale: true, name: '乖離%', nameTextStyle: { fontSize: 11 } },
-      { gridIndex: 2, min: 0, max: 100, name: 'Risk', nameTextStyle: { fontSize: 11 } },
-      { gridIndex: 3, min: 0, max: 100, name: '曝險%', nameTextStyle: { fontSize: 11 } },
+      {
+        gridIndex: 1,
+        scale: true,
+        name: '乖離%',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameRotate: 90,
+        nameTextStyle: { fontSize: 11 },
+        splitNumber: 3,
+        axisLabel: { fontSize: 10, hideOverlap: true, showMinLabel: false },
+      },
+      {
+        gridIndex: 2,
+        min: 0,
+        max: 100,
+        name: 'Risk',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameRotate: 90,
+        nameTextStyle: { fontSize: 11 },
+        splitNumber: 3,
+        axisLabel: { fontSize: 10, hideOverlap: true, showMaxLabel: false },
+      },
+      {
+        gridIndex: 3,
+        min: 0,
+        max: 100,
+        name: '曝險%',
+        nameLocation: 'middle',
+        nameGap: 50,
+        nameRotate: 90,
+        nameTextStyle: { fontSize: 11 },
+        splitNumber: 3,
+        axisLabel: { fontSize: 10, hideOverlap: true, showMaxLabel: false },
+      },
     ],
     series: [
       {
@@ -811,11 +844,7 @@ export function chipPcrKlineOption(series, windowSize = 120) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0, type: 'scroll' },
-    dataZoom: [
-      ...linkedDataZoom(2, { bottom: 10, height: 26, dates, left: 72, right: 36 }),
-      // 右側振幅滑桿靠內，避免蓋住 PCR 標籤
-      ...priceAxisZoom(0, { top: '7%', height: '50%', right: 8, width: 16 }),
-    ],
+    dataZoom: linkedDataZoom(2, { bottom: 10, height: 26, dates, left: 72, right: 36 }),
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
       // K 線區加高，振幅較好讀；底部留給軸日期 + 時間軸

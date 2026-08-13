@@ -69,7 +69,7 @@ def realtime():
 
 @app.get("/api/dashboard")
 def dashboard(
-    lookback: int = Query(REVERSAL_LOOKBACK_DAYS, ge=200, le=1500),
+    lookback: int = Query(REVERSAL_LOOKBACK_DAYS, ge=250, le=1500),
     percentile: float = Query(DEV_PERCENTILE_ALERT, ge=50, le=99),
 ):
     return build_dashboard_payload(lookback, percentile)

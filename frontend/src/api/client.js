@@ -28,8 +28,8 @@ async function fetchJson(url, { retries = 2, timeoutMs = 120000 } = {}) {
   throw lastErr
 }
 
-export async function fetchDashboard(lookback, percentile) {
-  const params = new URLSearchParams({ lookback, percentile })
+export async function fetchDashboard(lookback) {
+  const params = new URLSearchParams({ lookback })
   return fetchJson(`/api/dashboard?${params}`, { retries: 2, timeoutMs: 120000 })
 }
 

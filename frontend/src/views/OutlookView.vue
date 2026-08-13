@@ -205,6 +205,7 @@ const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
   <h2 class="page-title">走勢判讀</h2>
   <p class="page-cap">
     依均線結構拆成「長線／短線／綜合走法」。這是情境分類，不是點位預測；請搭配 Risk 與 Exposure 使用。
+    主判讀用最近已結算日K；盤中另有即時價試算短線，當日完整 Risk／籌碼仍要等收盤入庫。
   </p>
 
   <div class="toolbar">

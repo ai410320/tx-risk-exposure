@@ -85,15 +85,6 @@ export function linkedDataZoom(
   const xAxisIndex = Array.from({ length: axisCount }, (_, i) => i)
   return [
     {
-      type: 'inside',
-      xAxisIndex,
-      filterMode: 'none',
-      zoomOnMouseWheel: 'ctrl',
-      moveOnMouseWheel: false,
-      moveOnMouseMove: false,
-      preventDefaultMouseMove: false,
-    },
-    {
       type: 'slider',
       xAxisIndex,
       left,
@@ -137,43 +128,6 @@ export function linkedDataZoom(
         fontWeight: 600,
       },
       labelFormatter: (value, valueStr) => formatChartDateLabel(value, valueStr, dates),
-    },
-  ]
-}
-
-/** 價格軸上下縮放／拖動（僅綁定日K的 yAxis） */
-export function priceAxisZoom(yAxisIndex = 0, { top = '8%', height = '30%', right = 10, width = 18 } = {}) {
-  return [
-    {
-      type: 'inside',
-      yAxisIndex: [yAxisIndex],
-      filterMode: 'none',
-      // 在 K 線區按住拖曳可上下平移；Shift + 滾輪縮放振幅
-      zoomOnMouseWheel: 'shift',
-      moveOnMouseMove: true,
-      moveOnMouseWheel: false,
-      preventDefaultMouseMove: true,
-    },
-    {
-      type: 'slider',
-      yAxisIndex: [yAxisIndex],
-      right,
-      top,
-      height,
-      width,
-      showDetail: false,
-      brushSelect: false,
-      filterMode: 'none',
-      backgroundColor: '#e2e8f0',
-      fillerColor: 'rgba(37, 99, 235, 0.28)',
-      borderColor: '#475569',
-      handleSize: 14,
-      handleStyle: {
-        color: '#2563eb',
-        borderColor: '#1e3a8a',
-      },
-      moveHandleSize: 0,
-      labelPrecision: 0,
     },
   ]
 }

@@ -437,11 +437,11 @@ function fmtPct(n, digits = 1) {
     <h3>Risk × Exposure × 日K／MA20</h3>
     <p class="page-cap">
       上：日K（含夜盤）+ MA20；中：最高 vs MA20；下：Risk／Exposure。點圖切換日期。
-      底部藍色軸可左右拖時間；K 線區可上下拖動／右側滑桿調振幅（Shift+滾輪也可縮放）。
+      底部藍色時間軸可左右拖動區間。
     </p>
     <BaseChart
       :option="option"
-      height="980px"
+      height="1080px"
       @chart-click="onChartClick"
       @axis-click="onAxisClick"
     />

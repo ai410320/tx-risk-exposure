@@ -12,6 +12,6 @@ services:
       - key: BREADTH_MAX_BACKFILL
         value: "40"
       - key: REVERSAL_LOOKBACK_DAYS
-        value: "800"
+        value: "365"
       - key: FINMIND_TOKEN
         sync: false

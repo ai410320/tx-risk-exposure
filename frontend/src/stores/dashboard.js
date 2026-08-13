@@ -2,12 +2,20 @@ import { defineStore } from 'pinia'
 import { fetchDashboard } from '../api/client'
 import { resolveWindowSize, sliceDates } from '../charts/range'
 
+const LOOKBACK_DEFAULT = 365
 const savedRange = typeof localStorage !== 'undefined' ? localStorage.getItem('chartRange') : null
+if (typeof localStorage !== 'undefined' && localStorage.getItem('settingsVer') !== '2') {
+  localStorage.setItem('settingsVer', '2')
+  localStorage.removeItem('lookbackDays')
+}
+const savedLookback = typeof localStorage !== 'undefined' ? Number(localStorage.getItem('lookbackDays')) : NaN
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
-    lookback: 800,
-    percentile: 90,
+    lookback:
+      Number.isFinite(savedLookback) && savedLookback >= 250 && savedLookback <= 1200
+        ? savedLookback
+        : LOOKBACK_DEFAULT,
     /** 圖表顯示區間：1M / 3M / 6M / 1Y / ALL */
     chartRange: savedRange && ['1M', '3M', '6M', '1Y', 'ALL'].includes(savedRange) ? savedRange : '6M',
     refreshSeconds: 60,
@@ -38,11 +46,20 @@ export const useDashboardStore = defineStore('dashboard', {
     chartDatesFrom(dates) {
       return sliceDates(dates || [], this.chartRange)
     },
+    setLookback(days) {
+      const n = Math.max(250, Math.min(1200, Number(days) || LOOKBACK_DEFAULT))
+      this.lookback = n
+      try {
+        localStorage.setItem('lookbackDays', String(n))
+      } catch {
+        /* ignore */
+      }
+    },
     async load() {
       this.loading = true
       this.error = ''
       try {
-        this.data = await fetchDashboard(this.lookback, this.percentile)
+        this.data = await fetchDashboard(this.lookback)
         this.updatedAt = new Date().toLocaleString('zh-TW')
       } catch (err) {
         this.error = err.message || String(err)

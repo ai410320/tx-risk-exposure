@@ -16,6 +16,7 @@ const rangeText = ref('')
 const showTimebar = ref(false)
 let zrHandler = null
 let boundChart = null
+let wheelCleanup = null
 
 function getChart() {
   const inst = chartRef.value
@@ -97,7 +98,25 @@ function onDataZoom() {
   syncZoomRangeLabel()
 }
 
+function unbindWheel() {
+  if (wheelCleanup) {
+    wheelCleanup()
+    wheelCleanup = null
+  }
+}
+
+function allowPageScroll(chart) {
+  unbindWheel()
+  const el = chart?.getDom?.()
+  if (!el) return
+  // zrender 會在 canvas 上 preventDefault(wheel)，導致 hover 圖表時整頁不能捲
+  const onWheel = (event) => event.stopImmediatePropagation()
+  el.addEventListener('wheel', onWheel, { capture: true, passive: true })
+  wheelCleanup = () => el.removeEventListener('wheel', onWheel, { capture: true })
+}
+
 function unbindZr() {
+  unbindWheel()
   if (boundChart && zrHandler) {
     boundChart.getZr().off('click', zrHandler)
   }
@@ -110,6 +129,7 @@ function bindZr() {
   const chart = getChart()
   if (!chart) return
   boundChart = chart
+  allowPageScroll(chart)
   zrHandler = (event) => {
     if (event?.target) return
     const point = [event.offsetX, event.offsetY]
