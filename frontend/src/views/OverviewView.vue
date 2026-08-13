@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useDashboardStore } from '../stores/dashboard'
 import BaseChart from '../components/BaseChart.vue'
 import { bannerClass, fmt, overviewComboOption, pct } from '../charts/options'
+import { useNarrow } from '../charts/useNarrow'
 
 const GROUP_META = [
   ['score_A', 'A', 'Trend', 30, '均線結構／斜率', '短中線轉弱、跌破 MA20／MA60'],
@@ -25,6 +26,7 @@ const LEVEL_META = {
 }
 
 const store = useDashboardStore()
+const narrow = useNarrow()
 const quote = computed(() => store.quote)
 const monthDev = computed(() => store.data?.month_dev_series || {})
 const backtest = computed(() => store.data?.backtest || null)
@@ -243,7 +245,7 @@ const groupReading = computed(() => {
 })
 
 const option = computed(() =>
-  overviewComboOption(store.series, monthDev.value, 0.8, selectedDate.value, windowSize.value),
+  overviewComboOption(store.series, monthDev.value, 0.8, selectedDate.value, windowSize.value, narrow.value),
 )
 
 const recent = computed(() => {
@@ -433,7 +435,7 @@ function fmtPct(n, digits = 1) {
     ｜最高 vs MA20 為獨立警報，不併入 0～100
   </p>
 
-  <div class="card">
+  <div class="card chart-card chart-card--overview">
     <h3>Risk × Exposure × 日K／MA20</h3>
     <p class="page-cap">
       上：日K（含夜盤）+ MA20；中：最高 vs MA20；下：Risk／Exposure。點圖切換日期。

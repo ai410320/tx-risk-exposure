@@ -3,8 +3,10 @@ import { computed, ref, watch } from 'vue'
 import { useDashboardStore } from '../stores/dashboard'
 import BaseChart from '../components/BaseChart.vue'
 import { chipOiPcrOption, chipPcrKlineOption, chipSpotFutOption } from '../charts/options'
+import { useNarrow } from '../charts/useNarrow'
 
 const store = useDashboardStore()
+const narrow = useNarrow()
 const chartDates = computed(() => store.chartDatesFrom(store.series?.date || []))
 const windowSize = computed(() => chartDates.value.length)
 const chip = computed(() => store.data?.chip || {})
@@ -66,9 +68,9 @@ const biasTone = computed(() => {
   return '中性'
 })
 
-const spotOpt = computed(() => chipSpotFutOption(store.series, windowSize.value))
-const oiOpt = computed(() => chipOiPcrOption(store.series, windowSize.value))
-const pcrKOpt = computed(() => chipPcrKlineOption(store.series, windowSize.value))
+const spotOpt = computed(() => chipSpotFutOption(store.series, windowSize.value, narrow.value))
+const oiOpt = computed(() => chipOiPcrOption(store.series, windowSize.value, narrow.value))
+const pcrKOpt = computed(() => chipPcrKlineOption(store.series, windowSize.value, narrow.value))
 </script>
 
 <template>
@@ -195,19 +197,19 @@ const pcrKOpt = computed(() => chipPcrKlineOption(store.series, windowSize.value
     </p>
   </div>
 
-  <div class="card">
+  <div class="card chart-card">
     <h3>價格 × 外資現貨 × 期貨淨OI變化</h3>
     <p class="page-cap">紅柱＝買超／淨多增；綠柱＝賣超／淨空增（台股慣例）。</p>
     <BaseChart :option="spotOpt" />
   </div>
 
-  <div class="card">
+  <div class="card chart-card">
     <h3>外資期貨淨留倉 × 選擇權 PCR</h3>
     <p class="page-cap">淨留倉＝多方口數−空方口數；PCR＝外資賣權多方OI／買權多方OI。右側虛線為回測門檻（P20／P80／P90）。</p>
     <BaseChart :option="oiOpt" height="460px" />
   </div>
 
-  <div class="card">
+  <div class="card chart-card">
     <h3>日K × PCR（對照勝率）</h3>
     <p class="page-cap">
       上看 TX 日K（加高蠟燭＋MA20），下看 PCR。粉紅底為 PCR≥P80（1.85）偏高避險區：回測裡這區之後 20 日勝率／報酬偏弱。

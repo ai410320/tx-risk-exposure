@@ -1,9 +1,12 @@
 <script setup>
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDashboardStore } from './stores/dashboard'
 import { CHART_RANGE_OPTIONS } from './charts/range'
 
 const store = useDashboardStore()
+const route = useRoute()
+const menuOpen = ref(false)
 let timer = null
 
 function restartTimer() {
@@ -11,6 +14,10 @@ function restartTimer() {
   if (store.refreshSeconds > 0) {
     timer = setInterval(() => store.load(), store.refreshSeconds * 1000)
   }
+}
+
+function closeMenu() {
+  menuOpen.value = false
 }
 
 onMounted(async () => {
@@ -25,14 +32,40 @@ watch(
     store.load()
   },
 )
+watch(
+  () => route.path,
+  () => {
+    closeMenu()
+  },
+)
 onUnmounted(() => timer && clearInterval(timer))
 </script>
 
 <template>
-  <div class="layout">
+  <div class="layout" :class="{ 'menu-open': menuOpen }">
+    <header class="topbar">
+      <button type="button" class="menu-btn" :aria-expanded="menuOpen" aria-label="開啟選單" @click="menuOpen = !menuOpen">
+        ☰
+      </button>
+      <div class="topbar-title">
+        <strong>台指轉折點</strong>
+        <span>Risk → Exposure</span>
+      </div>
+      <button type="button" class="topbar-refresh" :disabled="store.loading" @click="store.load()">
+        {{ store.loading ? '…' : '↻' }}
+      </button>
+    </header>
+
+    <div v-show="menuOpen" class="sidebar-backdrop" @click="closeMenu" />
+
     <aside class="sidebar">
-      <h1>台指轉折點</h1>
-      <div class="sub">Risk 0～100 → Exposure</div>
+      <div class="sidebar-head">
+        <div>
+          <h1>台指轉折點</h1>
+          <div class="sub">Risk 0～100 → Exposure</div>
+        </div>
+        <button type="button" class="sidebar-close" @click="closeMenu">關閉</button>
+      </div>
       <nav class="nav">
         <router-link to="/">總覽／Risk</router-link>
         <router-link to="/chip">籌碼／法人</router-link>

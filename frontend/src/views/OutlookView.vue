@@ -114,10 +114,10 @@ const option = computed(() => {
     },
     legend: { top: 0 },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    dataZoom: linkedDataZoom(2, { bottom: 8, height: 30, dates }),
+    dataZoom: linkedDataZoom(2),
     grid: [
       { left: 56, right: 28, top: 40, height: '42%' },
-      { left: 56, right: 28, top: '56%', bottom: 70 },
+      { left: 56, right: 28, top: '56%', bottom: 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },

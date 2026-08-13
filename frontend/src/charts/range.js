@@ -62,72 +62,30 @@ export function formatZoomRangeText(dates, startPct = 0, endPct = 100) {
   return `${a}  ～  ${b}`
 }
 
-/** 底部日期軸設定（玩股網風格：圖下先看得到日期） */
-export function timeAxisLabel(dates) {
+/** 底部日期軸設定 */
+export function timeAxisLabel(dates, { compact = false } = {}) {
   return {
     show: true,
     hideOverlap: true,
     showMinLabel: true,
     showMaxLabel: true,
-    // 與下方 dataZoom 滑桿留距，避免刻度被蓋住
-    margin: 10,
+    margin: compact ? 8 : 10,
     color: '#475569',
-    fontSize: 11,
+    fontSize: compact ? 10 : 11,
     formatter: (value, idx) => formatAxisTickLabel(value, idx, dates),
   }
 }
 
-/** ECharts 連動縮放（玩股網：下方導航軸可拖） */
-export function linkedDataZoom(
-  axisCount,
-  { bottom = 8, height = 26, dates = null, left = 56, right = 56 } = {},
-) {
-  const xAxisIndex = Array.from({ length: axisCount }, (_, i) => i)
+/** 隱藏式 dataZoom：實際拖動由 BaseChart HTML 時間軸負責 */
+export function linkedDataZoom(axisCount) {
+  const n = Math.max(1, Number(axisCount) || 1)
+  const xAxisIndex = Array.from({ length: n }, (_, i) => i)
   return [
     {
       type: 'slider',
+      show: false,
       xAxisIndex,
-      left,
-      right,
-      height,
-      bottom,
       filterMode: 'none',
-      brushSelect: false,
-      // 關閉把手即時日期：拖動時會蓋住軸刻度與圖下時間列；區間改看 chart-timebar
-      showDetail: false,
-      showDataShadow: true,
-      backgroundColor: '#e2e8f0',
-      dataBackground: {
-        lineStyle: { color: '#64748b', width: 1 },
-        areaStyle: { color: '#94a3b8' },
-      },
-      selectedDataBackground: {
-        lineStyle: { color: '#1d4ed8', width: 1.5 },
-        areaStyle: { color: 'rgba(37, 99, 235, 0.35)' },
-      },
-      handleIcon:
-        'path://M-5,-12 L5,-12 L5,12 L-5,12 Z M-1,-8 L1,-8 L1,8 L-1,8 Z',
-      handleSize: 22,
-      moveHandleSize: 0,
-      borderColor: '#475569',
-      borderWidth: 1,
-      fillerColor: 'rgba(37, 99, 235, 0.28)',
-      handleStyle: {
-        color: '#2563eb',
-        borderColor: '#1e3a8a',
-        borderWidth: 1,
-        shadowBlur: 3,
-        shadowColor: 'rgba(30, 64, 175, 0.4)',
-      },
-      emphasis: {
-        handleStyle: { color: '#1d4ed8', borderColor: '#1e3a8a' },
-      },
-      textStyle: {
-        color: '#0f172a',
-        fontSize: 11,
-        fontWeight: 600,
-      },
-      labelFormatter: (value, valueStr) => formatChartDateLabel(value, valueStr, dates),
     },
   ]
 }

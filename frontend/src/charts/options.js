@@ -102,7 +102,14 @@ export function scoreOption(series) {
 }
 
 /** 總覽：日K + MA20 + 乖離 + 轉折分數（同軸對齊） */
-export function overviewComboOption(series, monthDev, threshold = 0.8, selectedDate = null, windowSize = 120) {
+export function overviewComboOption(
+  series,
+  monthDev,
+  threshold = 0.8,
+  selectedDate = null,
+  windowSize = 120,
+  compact = false,
+) {
   const n = Math.max(1, Math.min(windowSize || 120, (monthDev?.date || series.date || []).length || 120))
   const dates = last(monthDev?.date || series.date || [], n)
   const start = (monthDev?.date || []).length - dates.length
@@ -134,15 +141,24 @@ export function overviewComboOption(series, monthDev, threshold = 0.8, selectedD
   // 日K（含夜盤）可能多出「僅夜盤／結算」日；Risk 用日盤序列 → 以 asof 向前帶值，避免圖上出現空值斷裂
   const scores = asofSeries(dates, scoreByDate)
   const exposures = asofSeries(dates, exposureByDate).map((v) => (v == null ? null : v * 100))
-  const dateMark = selectedDateMarkLine(dates, selectedDate)
+  const dateMark = selectedDateMarkLine(dates, selectedDate, {
+    showLabel: !compact,
+  })
   const dateMarkSilent = selectedDateMarkLine(dates, selectedDate, { showLabel: false })
 
-  const scoreMarkData = [
-    { yAxis: 40, label: { formatter: 'WARNING 40' }, lineStyle: { type: 'dashed', color: '#f9a825' } },
-    { yAxis: 55, label: { formatter: 'HIGH 55' }, lineStyle: { type: 'dashed', color: '#ef6c00' } },
-    { yAxis: 70, label: { formatter: 'VERY HIGH 70' }, lineStyle: { type: 'dashed', color: '#c62828' } },
-    { yAxis: 85, label: { formatter: 'EXTREME 85' }, lineStyle: { type: 'dashed', color: '#b71c1c' } },
-  ]
+  const scoreMarkData = compact
+    ? [
+        { yAxis: 40, label: { show: false }, lineStyle: { type: 'dashed', color: '#f9a825' } },
+        { yAxis: 55, label: { show: false }, lineStyle: { type: 'dashed', color: '#ef6c00' } },
+        { yAxis: 70, label: { show: false }, lineStyle: { type: 'dashed', color: '#c62828' } },
+        { yAxis: 85, label: { show: false }, lineStyle: { type: 'dashed', color: '#b71c1c' } },
+      ]
+    : [
+        { yAxis: 40, label: { formatter: 'WARNING 40' }, lineStyle: { type: 'dashed', color: '#f9a825' } },
+        { yAxis: 55, label: { formatter: 'HIGH 55' }, lineStyle: { type: 'dashed', color: '#ef6c00' } },
+        { yAxis: 70, label: { formatter: 'VERY HIGH 70' }, lineStyle: { type: 'dashed', color: '#c62828' } },
+        { yAxis: 85, label: { formatter: 'EXTREME 85' }, lineStyle: { type: 'dashed', color: '#b71c1c' } },
+      ]
   if (dateMarkSilent) {
     scoreMarkData.push({
       xAxis: selectedDate,
@@ -151,16 +167,41 @@ export function overviewComboOption(series, monthDev, threshold = 0.8, selectedD
     })
   }
 
+  const left = compact ? 44 : 72
+  const right = compact ? 36 : 128
+  const yName = (name) =>
+    compact
+      ? { name: '', axisLabel: { fontSize: 9, hideOverlap: true } }
+      : {
+          name,
+          nameLocation: 'middle',
+          nameGap: 50,
+          nameRotate: 90,
+          nameTextStyle: { fontSize: 11 },
+          axisLabel: { fontSize: 10, hideOverlap: true },
+        }
+
   return {
-    tooltip: { trigger: 'axis' },
-    legend: { top: 0, type: 'scroll' },
+    tooltip: { trigger: 'axis', confine: true },
+    legend: compact
+      ? {
+          top: 0,
+          type: 'scroll',
+          left: 'center',
+          width: '96%',
+          itemWidth: 10,
+          itemHeight: 8,
+          itemGap: 8,
+          textStyle: { fontSize: 10 },
+        }
+      : { top: 0, type: 'scroll' },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    dataZoom: linkedDataZoom(4, { bottom: 8, height: 30, dates, left: 72, right: 128 }),
+    dataZoom: linkedDataZoom(4),
     grid: [
-      { left: 72, right: 128, top: 40, height: '34%' },
-      { left: 72, right: 128, top: '42%', height: '12%' },
-      { left: 72, right: 128, top: '57%', height: '13%' },
-      { left: 72, right: 128, top: '73%', bottom: 78 },
+      { left, right, top: compact ? 48 : 40, height: '34%' },
+      { left, right, top: '42%', height: '12%' },
+      { left, right, top: '57%', height: '13%' },
+      { left, right, top: '73%', bottom: compact ? 32 : 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
@@ -172,7 +213,7 @@ export function overviewComboOption(series, monthDev, threshold = 0.8, selectedD
         gridIndex: 3,
         boundaryGap: true,
         axisTick: { alignWithLabel: true },
-        axisLabel: timeAxisLabel(dates),
+        axisLabel: timeAxisLabel(dates, { compact }),
         axisLine: { lineStyle: { color: '#94a3b8' } },
       },
     ],
@@ -180,50 +221,39 @@ export function overviewComboOption(series, monthDev, threshold = 0.8, selectedD
       {
         gridIndex: 0,
         scale: true,
-        name: '點位',
-        nameLocation: 'middle',
-        nameGap: 50,
-        nameRotate: 90,
-        nameTextStyle: { fontSize: 11 },
-        splitNumber: 5,
-        axisLabel: { fontSize: 10, hideOverlap: true },
+        ...yName('點位'),
+        splitNumber: compact ? 4 : 5,
+        axisLabel: {
+          fontSize: compact ? 9 : 10,
+          hideOverlap: true,
+          showMinLabel: false,
+          showMaxLabel: false,
+        },
         min: (v) => v.min - (v.max - v.min) * 0.08,
         max: (v) => v.max + (v.max - v.min) * 0.08,
       },
       {
         gridIndex: 1,
         scale: true,
-        name: '乖離%',
-        nameLocation: 'middle',
-        nameGap: 50,
-        nameRotate: 90,
-        nameTextStyle: { fontSize: 11 },
+        ...yName('乖離%'),
         splitNumber: 3,
-        axisLabel: { fontSize: 10, hideOverlap: true, showMinLabel: false },
+        axisLabel: { ...(compact ? { fontSize: 9 } : { fontSize: 10 }), hideOverlap: true, showMinLabel: false },
       },
       {
         gridIndex: 2,
         min: 0,
         max: 100,
-        name: 'Risk',
-        nameLocation: 'middle',
-        nameGap: 50,
-        nameRotate: 90,
-        nameTextStyle: { fontSize: 11 },
+        ...yName('Risk'),
         splitNumber: 3,
-        axisLabel: { fontSize: 10, hideOverlap: true, showMaxLabel: false },
+        axisLabel: { ...(compact ? { fontSize: 9 } : { fontSize: 10 }), hideOverlap: true, showMaxLabel: false },
       },
       {
         gridIndex: 3,
         min: 0,
         max: 100,
-        name: '曝險%',
-        nameLocation: 'middle',
-        nameGap: 50,
-        nameRotate: 90,
-        nameTextStyle: { fontSize: 11 },
+        ...yName('曝險%'),
         splitNumber: 3,
-        axisLabel: { fontSize: 10, hideOverlap: true, showMaxLabel: false },
+        axisLabel: { ...(compact ? { fontSize: 9 } : { fontSize: 10 }), hideOverlap: true, showMaxLabel: false },
       },
     ],
     series: [
@@ -317,10 +347,10 @@ export function trendOption(series, selectedDate = null, windowSize = 160) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(1, { bottom: 4, dates }),
-    grid: { left: 50, right: 28, top: 48, bottom: 70 },
+    dataZoom: linkedDataZoom(1),
+    grid: { left: 50, right: 36, top: 48, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: timeAxisLabel(dates) },
-    yAxis: { scale: true },
+    yAxis: { scale: true, axisLabel: { hideOverlap: true, showMinLabel: false, showMaxLabel: false } },
     series: [
       {
         type: 'candlestick',
@@ -382,10 +412,10 @@ export function deviationOption(series, selectedDate = null, windowSize = 200) {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    dataZoom: linkedDataZoom(2, { bottom: 4, dates }),
+    dataZoom: linkedDataZoom(2),
     grid: [
-      { left: 50, right: 28, top: 48, height: '28%' },
-      { left: 50, right: 28, top: '52%', bottom: 70 },
+      { left: 50, right: 36, top: 48, height: '28%' },
+      { left: 50, right: 36, top: '52%', bottom: 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
@@ -440,16 +470,25 @@ export function priceVolumeOption(series, selectedDate = null, windowSize = 140)
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    dataZoom: linkedDataZoom(2, { bottom: 4, dates }),
+    dataZoom: linkedDataZoom(2),
     grid: [
-      { left: 56, right: 28, top: 48, height: '54%' },
-      { left: 56, right: 28, top: '70%', bottom: 70 },
+      { left: 56, right: 36, top: 48, height: '54%' },
+      { left: 56, right: 36, top: '70%', bottom: 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
       { type: 'category', data: dates, gridIndex: 1, axisLabel: timeAxisLabel(dates) },
     ],
-    yAxis: [{ gridIndex: 0, scale: true, name: '點位', splitNumber: 5 }, { gridIndex: 1, name: '口數' }],
+    yAxis: [
+      {
+        gridIndex: 0,
+        scale: true,
+        name: '點位',
+        splitNumber: 5,
+        axisLabel: { hideOverlap: true, showMinLabel: false, showMaxLabel: false },
+      },
+      { gridIndex: 1, name: '口數' },
+    ],
     series: [
       {
         type: 'candlestick',
@@ -485,8 +524,8 @@ export function macdOption(series, selectedDate = null, windowSize = 140) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(1, { bottom: 4, dates }),
-    grid: { left: 56, right: 28, top: 48, bottom: 70 },
+    dataZoom: linkedDataZoom(1),
+    grid: { left: 56, right: 36, top: 48, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: timeAxisLabel(dates) },
     yAxis: { name: 'MACD' },
     series: [
@@ -527,8 +566,8 @@ export function kdOption(series, selectedDate = null, windowSize = 140) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(1, { bottom: 4, dates }),
-    grid: { left: 56, right: 28, top: 48, bottom: 70 },
+    dataZoom: linkedDataZoom(1),
+    grid: { left: 56, right: 36, top: 48, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: timeAxisLabel(dates) },
     yAxis: { min: 0, max: 100, name: 'KD' },
     series: [
@@ -574,11 +613,11 @@ export function breadthOption(series, selectedDate = null, windowSize = 160) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(3, { bottom: 4, dates }),
+    dataZoom: linkedDataZoom(3),
     grid: [
-      { left: 50, right: 28, top: 48, height: '24%' },
-      { left: 50, right: 28, top: '38%', height: '22%' },
-      { left: 50, right: 28, top: '64%', bottom: 70 },
+      { left: 50, right: 36, top: 48, height: '24%' },
+      { left: 50, right: 36, top: '38%', height: '22%' },
+      { left: 50, right: 36, top: '64%', bottom: 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
@@ -662,8 +701,8 @@ export function externalOption(series, keys, names, windowSize = 180) {
   return {
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
-    dataZoom: linkedDataZoom(1, { bottom: 4, dates }),
-    grid: { left: 50, right: 20, top: 40, bottom: 70 },
+    dataZoom: linkedDataZoom(1),
+    grid: { left: 50, right: 36, top: 40, bottom: 40 },
     xAxis: { type: 'category', data: dates, axisLabel: timeAxisLabel(dates) },
     yAxis: { name: '再基期=100' },
     series: echartsSeries,
@@ -671,33 +710,37 @@ export function externalOption(series, keys, names, windowSize = 180) {
 }
 
 /** 籌碼：外資現貨買賣超（億）＋期貨淨留倉變化 */
-export function chipSpotFutOption(series, windowSize = 120) {
+export function chipSpotFutOption(series, windowSize = 120, compact = false) {
   const n = Math.max(1, Math.min(windowSize || 120, series.date?.length || 120))
   const dates = last(series.date, n)
   const close = last(series.close, n)
   const spot = last(series.spot_foreign_net || [], n)
   const trust = last(series.spot_trust_net || [], n)
   const oiChg = last(series.fut_foreign_oi_chg || [], n)
+  const left = compact ? 44 : 56
+  const right = compact ? 36 : 28
   return {
-    tooltip: { trigger: 'axis' },
-    legend: { top: 0 },
+    tooltip: { trigger: 'axis', confine: true },
+    legend: compact
+      ? { top: 0, type: 'scroll', left: 'center', width: '96%', textStyle: { fontSize: 10 }, itemWidth: 10, itemHeight: 8 }
+      : { top: 0 },
     // bottom 抬高：軸日期在滑桿上方；區間文字看圖下 timebar
-    dataZoom: linkedDataZoom(3, { bottom: 10, height: 26, dates, left: 56, right: 28 }),
+    dataZoom: linkedDataZoom(3),
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
-      { left: 56, right: 28, top: 40, height: '28%' },
-      { left: 56, right: 28, top: '42%', height: '15%' },
-      { left: 56, right: 28, top: '61%', bottom: 70 },
+      { left, right, top: compact ? 48 : 40, height: '28%' },
+      { left, right, top: '42%', height: '15%' },
+      { left, right, top: '61%', bottom: compact ? 32 : 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
       { type: 'category', data: dates, gridIndex: 1, show: false },
-      { type: 'category', data: dates, gridIndex: 2, axisLabel: timeAxisLabel(dates) },
+      { type: 'category', data: dates, gridIndex: 2, axisLabel: timeAxisLabel(dates, { compact }) },
     ],
     yAxis: [
-      { gridIndex: 0, name: 'TX' },
-      { gridIndex: 1, name: '現貨億' },
-      { gridIndex: 2, name: '期貨口' },
+      { gridIndex: 0, name: compact ? '' : 'TX', axisLabel: { fontSize: compact ? 9 : 11, hideOverlap: true } },
+      { gridIndex: 1, name: compact ? '' : '現貨億', axisLabel: { fontSize: compact ? 9 : 11, hideOverlap: true } },
+      { gridIndex: 2, name: compact ? '' : '期貨口', axisLabel: { fontSize: compact ? 9 : 11, hideOverlap: true } },
     ],
     series: [
       {
@@ -741,7 +784,7 @@ export function chipSpotFutOption(series, windowSize = 120) {
   }
 }
 
-export function chipOiPcrOption(series, windowSize = 120) {
+export function chipOiPcrOption(series, windowSize = 120, compact = false) {
   const n = Math.max(1, Math.min(windowSize || 120, series.date?.length || 120))
   const dates = last(series.date, n)
   const oiNet = last(series.fut_foreign_oi_net || [], n)
@@ -751,22 +794,26 @@ export function chipOiPcrOption(series, windowSize = 120) {
     { y: 1.85, color: '#ef6c00', text: 'P80 1.85' },
     { y: 2.25, color: '#c62828', text: 'P90 2.25' },
   ]
+  const left = compact ? 44 : 64
+  const right = compact ? 36 : 28
   return {
-    tooltip: { trigger: 'axis' },
-    legend: { top: 0 },
-    dataZoom: linkedDataZoom(2, { bottom: 10, height: 26, dates, left: 64, right: 28 }),
+    tooltip: { trigger: 'axis', confine: true },
+    legend: compact
+      ? { top: 0, type: 'scroll', left: 'center', width: '96%', textStyle: { fontSize: 10 }, itemWidth: 10, itemHeight: 8 }
+      : { top: 0 },
+    dataZoom: linkedDataZoom(2),
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
-      { left: 64, right: 28, top: 40, height: '34%' },
-      { left: 64, right: 28, top: '48%', bottom: 70 },
+      { left, right, top: compact ? 48 : 40, height: '34%' },
+      { left, right, top: '48%', bottom: compact ? 32 : 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
-      { type: 'category', data: dates, gridIndex: 1, axisLabel: timeAxisLabel(dates) },
+      { type: 'category', data: dates, gridIndex: 1, axisLabel: timeAxisLabel(dates, { compact }) },
     ],
     yAxis: [
-      { gridIndex: 0, name: '外資期貨淨OI', scale: true },
-      { gridIndex: 1, name: 'PCR', scale: true, min: (v) => Math.min(0.5, v.min * 0.95), max: (v) => Math.max(2.5, v.max * 1.05) },
+      { gridIndex: 0, name: compact ? '' : '外資期貨淨OI', scale: true, axisLabel: { fontSize: compact ? 9 : 11, hideOverlap: true } },
+      { gridIndex: 1, name: compact ? '' : 'PCR', scale: true, min: (v) => Math.min(0.5, v.min * 0.95), max: (v) => Math.max(2.5, v.max * 1.05), axisLabel: { fontSize: compact ? 9 : 11, hideOverlap: true } },
     ],
     series: [
       {
@@ -814,7 +861,7 @@ export function chipOiPcrOption(series, windowSize = 120) {
 }
 
 /** PCR × 日K：上方加高 K 棒，下方 PCR 門檻線，用來對照高／低 PCR 後走勢 */
-export function chipPcrKlineOption(series, windowSize = 120) {
+export function chipPcrKlineOption(series, windowSize = 120, compact = false) {
   const n = Math.max(1, Math.min(windowSize || 120, series.date?.length || 120))
   const dates = last(series.date, n)
   const start = (series.date || []).length - dates.length
@@ -841,37 +888,46 @@ export function chipPcrKlineOption(series, windowSize = 120) {
     { y: 1.85, color: '#ef6c00', text: 'P80 1.85' },
     { y: 2.25, color: '#c62828', text: 'P90 2.25' },
   ]
+  const left = compact ? 44 : 72
+  const right = 36
   return {
-    tooltip: { trigger: 'axis' },
-    legend: { top: 0, type: 'scroll' },
-    dataZoom: linkedDataZoom(2, { bottom: 10, height: 26, dates, left: 72, right: 36 }),
+    tooltip: { trigger: 'axis', confine: true },
+    legend: compact
+      ? { top: 0, type: 'scroll', left: 'center', width: '96%', textStyle: { fontSize: 10 }, itemWidth: 10, itemHeight: 8 }
+      : { top: 0, type: 'scroll' },
+    dataZoom: linkedDataZoom(2),
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
     grid: [
-      // K 線區加高，振幅較好讀；底部留給軸日期 + 時間軸
-      { left: 72, right: 36, top: 40, height: '52%' },
-      { left: 72, right: 36, top: '60%', bottom: 70 },
+      // K 線區加高，振幅較好讀；底部留給軸日期
+      { left, right, top: compact ? 48 : 40, height: '52%' },
+      { left, right, top: '60%', bottom: compact ? 32 : 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
-      { type: 'category', data: dates, gridIndex: 1, axisLabel: timeAxisLabel(dates) },
+      { type: 'category', data: dates, gridIndex: 1, axisLabel: timeAxisLabel(dates, { compact }) },
     ],
     yAxis: [
       {
         gridIndex: 0,
         scale: true,
-        name: 'TX 日K',
-        splitNumber: 6,
+        name: compact ? '' : 'TX 日K',
+        splitNumber: compact ? 4 : 6,
         min: kMin,
         max: kMax,
-        axisLabel: { hideOverlap: true },
+        axisLabel: {
+          hideOverlap: true,
+          fontSize: compact ? 9 : 11,
+          showMinLabel: false,
+          showMaxLabel: false,
+        },
       },
       {
         gridIndex: 1,
-        name: 'PCR',
+        name: compact ? '' : 'PCR',
         scale: true,
         min: (v) => Math.min(0.45, (v.min ?? 1) * 0.9),
         max: (v) => Math.max(2.7, (v.max ?? 2) * 1.1),
-        axisLabel: { hideOverlap: true },
+        axisLabel: { hideOverlap: true, fontSize: compact ? 9 : 11 },
       },
     ],
     series: [
@@ -948,17 +1004,23 @@ export function monthlyKOption(monthDev, _todayHigh, _monthlyClose, threshold = 
     tooltip: { trigger: 'axis' },
     legend: { top: 0 },
     axisPointer: { link: [{ xAxisIndex: 'all' }] },
-    dataZoom: linkedDataZoom(2, { bottom: 4, dates }),
+    dataZoom: linkedDataZoom(2),
     grid: [
-      { left: 56, right: 24, top: 40, height: '54%' },
-      { left: 56, right: 24, top: '64%', bottom: 70 },
+      { left: 56, right: 36, top: 40, height: '54%' },
+      { left: 56, right: 36, top: '64%', bottom: 40 },
     ],
     xAxis: [
       { type: 'category', data: dates, gridIndex: 0, show: false },
       { type: 'category', data: dates, gridIndex: 1, axisLabel: timeAxisLabel(dates) },
     ],
     yAxis: [
-      { gridIndex: 0, scale: true, name: '點位', splitNumber: 5 },
+      {
+        gridIndex: 0,
+        scale: true,
+        name: '點位',
+        splitNumber: 5,
+        axisLabel: { hideOverlap: true, showMinLabel: false, showMaxLabel: false },
+      },
       { gridIndex: 1, name: '乖離%' },
     ],
     series: [
