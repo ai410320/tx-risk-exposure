@@ -47,10 +47,3 @@ npm run dev
    uvicorn server:app --reload --port 8001
    並記得前端 vite.config.js 的 proxy 也要改成同一個 port。
 4. 停止後端：在該終端機按 Ctrl + C。
-
-
-（可選）舊版 Streamlit 畫面
-----------------------------------------
-cd /Users/jiangziqi/Desktop/stock_Kbar
-source .venv/bin/activate
-streamlit run app.py

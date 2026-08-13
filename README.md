@@ -63,9 +63,3 @@ docker run --rm -p 8000:8000 -e CORS_ORIGINS='*' tx-risk-exposure
 | `/breadth` | 市場廣度 |
 | `/external` | 外部市場 |
 | `/monthly` | 月K 乖離 |
-
-## 舊版 Streamlit（可選）
-
-```bash
-streamlit run app.py
-```
