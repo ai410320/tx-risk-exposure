@@ -4,6 +4,8 @@ import { useDashboardStore } from '../stores/dashboard'
 import BaseChart from '../components/BaseChart.vue'
 import { bannerClass, fmt, overviewComboOption, pct } from '../charts/options'
 import { useNarrow } from '../charts/useNarrow'
+import { biasClass, rowFromSeries } from '../outlook/regime'
+import { buildPlaybook } from '../outlook/playbook'
 
 const GROUP_META = [
   ['score_A', 'A', 'Trend', 30, '均線結構／斜率', '短中線轉弱、跌破 MA20／MA60'],
@@ -199,6 +201,11 @@ const washoutRecent = computed(() => Boolean(atScored('washout_recent')))
 const meta = computed(() => levelFromRisk(risk.value, riskLevel.value))
 const readingLine = computed(() => riskReadingLine(risk.value))
 const action = computed(() => actionFromExposure(exposure.value))
+const playbook = computed(() => {
+  if (scoredIndex.value < 0) return null
+  const r = rowFromSeries(store.series, scoredIndex.value)
+  return r ? buildPlaybook(r, store.series, scoredIndex.value) : null
+})
 const nearWarning = computed(() => risk.value >= 35 && risk.value < 40)
 const reboundLabel = computed(() => {
   const s = reboundStage.value
@@ -344,6 +351,15 @@ function fmtPct(n, digits = 1) {
     <span v-if="drawdownCut">｜回撤減碼（距20日高 {{ ddFromHigh == null ? '—' : `${(ddFromHigh * 100).toFixed(1)}%` }}）</span>
     <span v-if="reboundLabel">｜{{ reboundLabel }}</span>
   </div>
+
+  <div v-if="playbook" class="banner" :class="biasClass(playbook.phase.tone)">
+    情勢：{{ playbook.phase.label }}｜{{ playbook.stance.label }}
+    <span class="muted">｜{{ playbook.entry }}</span>
+  </div>
+  <p v-if="playbook" class="page-cap">
+    {{ playbook.phase.plain }}
+    詳見「走勢判讀」的操作劇本與點位帶。
+  </p>
   <p v-if="scoreAsOf" class="page-cap" style="color:#b45309">
     選定日 {{ selectedDate }} 尚無日盤 Risk／Exposure（常見於盤中未結算，或僅補了外部市場）。上方分數為前一評分日 {{ scoreAsOfDate }} 的 asof 值；盤中請另看即時試算。
   </p>

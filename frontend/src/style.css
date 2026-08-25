@@ -588,6 +588,9 @@ table tbody tr.active { background: #fff7ed; }
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+  .card:has(.outlook-review) {
+    overflow: visible;
+  }
 
   .chart-card {
     width: 100%;

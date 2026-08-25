@@ -7,8 +7,12 @@ import {
   classifyOutlook,
   rowFromSeries,
 } from '../outlook/regime'
+import { buildPlaybook } from '../outlook/playbook'
 import { fmt, pct } from '../charts/options'
-import { linkedDataZoom, timeAxisLabel } from '../charts/range'
+import { CHART_RANGE_OPTIONS, linkedDataZoom, timeAxisLabel } from '../charts/range'
+
+const REVIEW_TRADING_DAYS =
+  CHART_RANGE_OPTIONS.find((o) => o.id === '6M')?.tradingDays || 132
 
 const store = useDashboardStore()
 const chartDates = computed(() => store.chartDatesFrom(store.series?.date || []))
@@ -41,6 +45,9 @@ function at(key) {
 
 const row = computed(() => rowFromSeries(store.series, selectedIndex.value))
 const outlook = computed(() => (row.value ? classifyOutlook(row.value) : null))
+const playbook = computed(() =>
+  row.value ? buildPlaybook(row.value, store.series, selectedIndex.value) : null,
+)
 
 const liveRow = computed(() => {
   const s = store.series
@@ -56,13 +63,17 @@ const liveRow = computed(() => {
   }
 })
 const liveOutlook = computed(() => (liveRow.value ? classifyOutlook(liveRow.value) : null))
+const livePlaybook = computed(() => {
+  if (!liveRow.value || !store.series?.date?.length) return null
+  return buildPlaybook(liveRow.value, store.series, store.series.date.length - 1)
+})
 
-const pathHistory = computed(() => {
+function outlookRowsFrom(start) {
   const s = store.series
   if (!s?.date?.length) return []
-  const start = Math.max(0, s.date.length - (windowSize.value || 120))
-  return s.date.slice(start).map((date, i) => {
-    const idx = start + i
+  const from = Math.max(0, start)
+  return s.date.slice(from).map((date, i) => {
+    const idx = from + i
     const o = classifyOutlook(rowFromSeries(s, idx))
     return {
       date,
@@ -75,6 +86,12 @@ const pathHistory = computed(() => {
       exposure: s.exposure?.[idx],
     }
   })
+}
+
+const pathHistory = computed(() => {
+  const s = store.series
+  if (!s?.date?.length) return []
+  return outlookRowsFrom(s.date.length - (windowSize.value || 120))
 })
 
 const option = computed(() => {
@@ -198,14 +215,18 @@ function onAxisClick({ date }) {
   pickDate(date)
 }
 
-const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
+const recent = computed(() => {
+  const s = store.series
+  if (!s?.date?.length) return []
+  return outlookRowsFrom(s.date.length - REVIEW_TRADING_DAYS).reverse()
+})
 </script>
 
 <template>
   <h2 class="page-title">走勢判讀</h2>
   <p class="page-cap">
-    依均線結構拆成「長線／短線／綜合走法」。這是情境分類，不是點位預測；請搭配 Risk 與 Exposure 使用。
-    主判讀用最近已結算日K；盤中另有即時價試算短線，當日完整 Risk／籌碼仍要等收盤入庫。
+    以「長期持有多單」為預設：先判斷現在是上升／盤整／回檔／轉弱，再給續抱或等回加碼的參考帶。
+    點位是均線與近高低推導的參考，不是保證進出場價；曝險仍以 Risk → Exposure 為準。
   </p>
 
   <div class="toolbar">
@@ -220,14 +241,23 @@ const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
     </button>
   </div>
 
-  <template v-if="outlook">
-    <div class="banner" :class="biasClass(outlook.path.code.includes('bear') ? 'bear' : outlook.path.code.includes('bull') ? 'bull' : 'range')">
-      {{ selectedDate }}｜目前走法：{{ outlook.path.title }}
+  <template v-if="playbook && outlook">
+    <div class="banner" :class="biasClass(playbook.phase.tone)">
+      {{ selectedDate }}｜情勢：{{ playbook.phase.label }}｜操作：{{ playbook.stance.label }}
     </div>
-    <p class="page-cap">{{ outlook.path.summary }}</p>
+    <p class="page-cap">{{ playbook.phase.plain }}</p>
+    <p class="page-cap">走法：{{ outlook.path.title }} — {{ outlook.path.summary }}</p>
     <p v-if="outlook.path.note" class="page-cap" style="color:#b45309">{{ outlook.path.note }}</p>
 
     <div class="metrics">
+      <div class="metric">
+        <div class="label">情勢</div>
+        <div class="value" :class="biasClass(playbook.phase.tone)" style="font-size:18px">{{ playbook.phase.label }}</div>
+      </div>
+      <div class="metric">
+        <div class="label">操作建議</div>
+        <div class="value" style="font-size:18px">{{ playbook.stance.label }}</div>
+      </div>
       <div class="metric">
         <div class="label">長線</div>
         <div class="value" :class="biasClass(outlook.long.bias)" style="font-size:18px">{{ outlook.long.label }}</div>
@@ -244,6 +274,33 @@ const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
         <div class="label">Exposure</div>
         <div class="value">{{ at('exposure') == null ? '—' : `${Math.round(at('exposure') * 100)}%` }}</div>
       </div>
+    </div>
+
+    <div class="card playbook-card">
+      <h3>長期偏多操作劇本</h3>
+      <p>{{ playbook.stance.detail }}</p>
+      <div class="grid-2" style="margin-top:12px">
+        <div>
+          <h4 class="playbook-h">適合進場／加碼</h4>
+          <p>{{ playbook.entry }}</p>
+        </div>
+        <div>
+          <h4 class="playbook-h">出場／降碼參考</h4>
+          <p>{{ playbook.exit }}</p>
+        </div>
+      </div>
+      <div class="metrics" style="margin-top:12px">
+        <div v-for="lv in playbook.levels" :key="lv.key" class="metric">
+          <div class="label">{{ lv.label }}</div>
+          <div class="value" style="font-size:16px">{{ lv.value }}</div>
+        </div>
+      </div>
+      <ul class="playbook-list">
+        <li v-for="(item, i) in playbook.doNow" :key="i">{{ item }}</li>
+      </ul>
+      <p class="page-cap" style="margin-top:8px">
+        盤整期原則：不追高、不翻空；回測 MA20～MA60 且收盤站穩才加；日收破 MA60 先降碼。
+      </p>
     </div>
 
     <div class="grid-2">
@@ -266,11 +323,14 @@ const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
     </div>
   </template>
 
-  <div v-if="liveOutlook && store.data?.live_risk" class="card">
+  <div v-if="livePlaybook && liveOutlook && store.data?.live_risk" class="card">
     <h3>即時價下的走勢（試算）</h3>
     <p class="page-cap">
-      用即時 {{ fmt(store.data.live_risk.price) }}（{{ store.quote?.session_label }}）對均線重判短線；長線結構仍多半沿用近收。
+      用即時 {{ fmt(store.data.live_risk.price) }}（{{ store.quote?.session_label }}）重判情勢；長線結構仍多半沿用近收。
     </p>
+    <div class="banner" :class="biasClass(livePlaybook.phase.tone)" style="margin-bottom:10px">
+      情勢：{{ livePlaybook.phase.label }}｜操作：{{ livePlaybook.stance.label }}
+    </div>
     <div class="metrics">
       <div class="metric">
         <div class="label">即時走法</div>
@@ -285,7 +345,7 @@ const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
         <div class="value" :class="biasClass(liveOutlook.short.bias)" style="font-size:16px">{{ liveOutlook.short.label }}</div>
       </div>
     </div>
-    <p class="page-cap">{{ liveOutlook.path.summary }}</p>
+    <p class="page-cap">{{ livePlaybook.entry }}</p>
   </div>
 
   <div class="card">
@@ -313,25 +373,53 @@ const recent = computed(() => [...pathHistory.value].reverse().slice(0, 25))
   </div>
 
   <div class="card">
-    <h3>近期走法回看</h3>
-    <table>
-      <thead><tr><th>日期</th><th>收盤</th><th>長線</th><th>短線</th><th>走法</th><th>Risk</th></tr></thead>
-      <tbody>
-        <tr
-          v-for="r in recent"
-          :key="r.date"
-          class="click-row"
-          :class="{ active: r.date === selectedDate }"
-          @click="pickDate(r.date)"
-        >
-          <td>{{ r.date }}</td>
-          <td>{{ fmt(r.close) }}</td>
-          <td>{{ r.long }}</td>
-          <td>{{ r.short }}</td>
-          <td>{{ r.path }}</td>
-          <td>{{ r.risk == null ? '—' : Number(r.risk).toFixed(1) }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <h3>走法回看（近半年）</h3>
+    <p class="page-cap">約 {{ recent.length }} 個交易日，由新到舊。點列可切換上方判讀日期。</p>
+    <div class="outlook-review">
+      <table>
+        <thead><tr><th>日期</th><th>收盤</th><th>長線</th><th>短線</th><th>走法</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr
+            v-for="r in recent"
+            :key="r.date"
+            class="click-row"
+            :class="{ active: r.date === selectedDate }"
+            @click="pickDate(r.date)"
+          >
+            <td>{{ r.date }}</td>
+            <td>{{ fmt(r.close) }}</td>
+            <td>{{ r.long }}</td>
+            <td>{{ r.short }}</td>
+            <td>{{ r.path }}</td>
+            <td>{{ r.risk == null ? '—' : Number(r.risk).toFixed(1) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.outlook-review {
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.outlook-review thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+}
+.playbook-card h4.playbook-h {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #475569;
+}
+.playbook-list {
+  margin: 12px 0 0;
+  padding-left: 1.2em;
+  color: #334155;
+  line-height: 1.55;
+}
+</style>
